@@ -7,16 +7,36 @@ public class PheroMap : MonoBehaviour {
     int rows;
     int cols;
 
+    // stores tiles in an array, index starts at 0
+    Transform[,] mapTiles;
+    Color lerpedColor;
+    Color originalColor;
+    
+    // used to lerp color
+    public float maxPheroValue;
+    public Color finalColor;
+
+    // pheromone data in an array, index starts at 1
+    // index of this matches with tile index
     public float[,] pheromoneTable;
 
     // Use this for initialization
     void Start () {
-        rows = (int) GetComponent<MapGenerator>().mapSize.x;
+
+        // delay because map has to be generated first
+        Invoke("delayedStart", 0.5f);
+    }
+
+    void delayedStart () {
+        mapTiles = GetComponent<MapGenerator>().mapTile;
+        originalColor = GetComponent<MapGenerator>().tilePrefab.gameObject.GetComponent<Renderer>().sharedMaterial.color;
+
+        rows = (int)GetComponent<MapGenerator>().mapSize.x;
         cols = (int)GetComponent<MapGenerator>().mapSize.y;
 
-        pheromoneTable = new float[rows, cols];
-        for (int i = 0; i < rows; i++) {
-            for (int j = 0; j < cols; j++) {
+        pheromoneTable = new float[rows + 1, cols + 1];
+        for (int i = 0; i < rows+1; i++) {
+            for (int j = 0; j < cols+1; j++) {
                 pheromoneTable[i, j] = 0;
             }
         }
@@ -50,8 +70,26 @@ public class PheroMap : MonoBehaviour {
                 Debug.DrawLine(ray.origin, point, Color.blue);
 
                 pheromoneTable[pointx, pointz]++;
+                //DecreasePheromones(0.5f);
+
+                UpdateTileColor(pointx, pointz);
 
                 Debug.Log(pointx + ", " + pointz + " Pheromone Value: " + pheromoneTable[pointx, pointz]);
+            }
+        }
+    }
+
+    public void UpdateTileColor (int tileX, int tileZ) {
+        Renderer rend = mapTiles[tileX, tileZ].GetComponent<Renderer>();
+        lerpedColor = Color.Lerp(originalColor, finalColor, pheromoneTable[tileX, tileZ] / maxPheroValue);
+        rend.material.color = lerpedColor;
+    }
+
+    public void DecreasePheromones (float decreaseVal) {
+        for (int i = 1; i < rows+1; i++) {
+            for (int j = 1; j < cols+1; j++) {
+                pheromoneTable[i, j] = pheromoneTable[i, j] - decreaseVal;
+                UpdateTileColor(i, j);
             }
         }
     }
