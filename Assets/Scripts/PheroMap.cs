@@ -20,11 +20,18 @@ public class PheroMap : MonoBehaviour {
     // index of this matches with tile index
     public float[,] pheromoneTable;
 
+    // used with DecreasePheromonesUniformly
+    public float pheroDecreaseVal;
+    public float pheroDecreaseStartDelay;
+    public float pheroDecreaseRepeatedDelay;
+
     // Use this for initialization
     void Start () {
 
         // delay because map has to be generated first
         Invoke("delayedStart", 0.5f);
+
+        InvokeRepeating("DecreasePheromonesUniformly", pheroDecreaseStartDelay, pheroDecreaseRepeatedDelay);
     }
 
     void delayedStart () {
@@ -69,7 +76,7 @@ public class PheroMap : MonoBehaviour {
 
                 Debug.DrawLine(ray.origin, point, Color.blue);
 
-                pheromoneTable[pointx, pointz]++;
+                //pheromoneTable[pointx, pointz]++;
                 //DecreasePheromones(0.5f);
 
                 UpdateTileColor(pointx, pointz);
@@ -89,8 +96,17 @@ public class PheroMap : MonoBehaviour {
         for (int i = 1; i < rows+1; i++) {
             for (int j = 1; j < cols+1; j++) {
                 pheromoneTable[i, j] = pheromoneTable[i, j] - decreaseVal;
+                if (pheromoneTable[i, j] < 0) {
+                    pheromoneTable[i, j] = 0;
+                }
                 UpdateTileColor(i, j);
             }
         }
+        Debug.Log("phero decreased");
+    }
+
+    // created to use InvokeRepeating
+    void DecreasePheromonesUniformly() {
+        DecreasePheromones(pheroDecreaseVal);
     }
 }

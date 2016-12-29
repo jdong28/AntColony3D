@@ -82,8 +82,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\Scripts\AntController.cs" />
+    <Compile Include="Assets\Scripts\CameraController.cs" />
+    <Compile Include="Assets\Scripts\Food.cs" />
     <Compile Include="Assets\Scripts\MapGenerator.cs" />
-    <Compile Include="Assets\Scripts\MapTile.cs" />
     <Compile Include="Assets\Scripts\MovementDirection.cs" />
     <Compile Include="Assets\Scripts\PheroMap.cs" />
     <Compile Include="Assets\Scripts\QueenController.cs" />

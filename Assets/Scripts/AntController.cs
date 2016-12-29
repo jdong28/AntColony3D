@@ -29,7 +29,7 @@ public class AntController : MonoBehaviour {
 
         prevPos = myRB.position;
         newPos = FindNextTile(prevPos);
-        depositPheromone();
+        //depositPheromone();
         moving = true;
     }
 
@@ -87,6 +87,15 @@ public class AntController : MonoBehaviour {
         // arrived at next tile
         else {
             moving = false;
+        }
+    }
+
+    // needs work does not work 100%
+    private void OnTriggerEnter(Collider other) {
+        if (other.gameObject.tag == "Boundary") {
+            Debug.Log("hit wall");
+            
+            prevPos = other.transform.position;
         }
     }
 
