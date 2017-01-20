@@ -11,11 +11,15 @@ public class AntController : MonoBehaviour {
     PheroMap pMap;
 
     bool moving;
+    bool reachedFood = false;
     Vector3 newPos;
     Vector3 prevPos;
     List<MovementDirection<Vector3, float>> moveList;
 
     public float speed = 1f;
+
+    [Range(0, 0.45f)]
+    public float movementVariation = 0.3f;
 
     // Use this for initialization
     void Start() {
@@ -74,7 +78,9 @@ public class AntController : MonoBehaviour {
             prevPos = myRB.position;
             moving = true;
 
-            depositPheromone();
+            if (reachedFood) {
+                depositPheromone();
+            }
 
         }
         // moving
@@ -92,9 +98,13 @@ public class AntController : MonoBehaviour {
 
     // needs work does not work 100%
     private void OnTriggerEnter(Collider other) {
-        if (other.gameObject.tag == "Boundary") {
-            Debug.Log("hit wall");
-            
+        if (other.gameObject.tag == "Food" || other.gameObject.tag == "Boundary") {
+            Debug.Log("hit wall..or food");
+            //moving = false;
+            if (other.gameObject.tag == "Food") {
+                reachedFood = true;
+            }
+            //remove from possible movelist 
             prevPos = other.transform.position;
         }
     }
@@ -109,20 +119,27 @@ public class AntController : MonoBehaviour {
         Debug.Log("deposited pheromone");
     }
 
-    // find neighbour tile position in world coords with highest pheromone value
-    // highest pheromone value for now..
+    // find neighbour tile position and choose based on pheromone
     Vector3 FindNextTile(Vector3 previousPos) {
         Vector3 curTilePos = GetTileCoord(myRB.position);
         int x = (int)curTilePos.x;
         int z = (int)curTilePos.z;
 
-        int move_x = 0;
-        int move_z = 0;
+        float move_x = 0;
+        float move_z = 0;
         float pheroTotal = 0;
+
+        //calibrate prevPos since movement has random variations, calibrate to nearest .5
+        previousPos.x = Mathf.Floor(previousPos.x) + 0.5f;
+        previousPos.z = Mathf.Floor(previousPos.z) + 0.5f;
 
         MovementDirection<Vector3, float> moveToBeDeleted = new MovementDirection<Vector3, float>();
         foreach (MovementDirection<Vector3, float> move in moveList) {
-            Vector3 testPos = new Vector3(myRB.position.x + (int)move.Direction.x, 0.5f, myRB.position.z + (int)move.Direction.z);
+            //calibrate ant.position since movement has random variations, calibrate to nearest .5
+            float calibratedX = Mathf.Floor(myRB.position.x) + 0.5f;
+            float calibratedZ = Mathf.Floor(myRB.position.z) + 0.5f;
+
+            Vector3 testPos = new Vector3(calibratedX + (int)move.Direction.x, 0.5f, calibratedZ + (int)move.Direction.z);
 
             // if move results in previous state, remove from list of possible moves
             if (testPos == previousPos) {
@@ -139,7 +156,7 @@ public class AntController : MonoBehaviour {
         // calculate sum of all neighbour tile pheromone values
         for (int i = -1; i <= 1; i += 1) {
             for (int j = -1; j <= 1; j += 1) {
-                if (i == 0 || j == 0) {
+                if (i == 0 ^ j == 0) {
                     pheroTotal = pheroTotal + pTable[x + i, z + j];
                 }
             }
@@ -157,20 +174,27 @@ public class AntController : MonoBehaviour {
         // choose move using probability
         foreach (MovementDirection<Vector3, float> move in moveList) {
             if (diceroll <= move.Probability) {
-                move_x = (int) move.Direction.x;
-                move_z = (int) move.Direction.z;
+                float movementVariationX = Random.Range(-movementVariation, movementVariation);
+                float movementVariationZ = Random.Range(-movementVariation, movementVariation);
+
+                move_x = move.Direction.x;
+                move_z = move.Direction.z;
+
+                move_x = move_x + movementVariationX;
+                move_z = move_z + movementVariationZ;
             }
         }
 
         // if all moves equally likely then choose randomly
         if (move_x == 0 && move_z == 0) {
             int diceroll2 = Random.Range(0, moveList.Count - 1);
-            move_x = (int) moveList[diceroll2].Direction.x;
-            move_z = (int) moveList[diceroll2].Direction.z;
+            move_x = moveList[diceroll2].Direction.x;
+            move_z = moveList[diceroll2].Direction.z;
         }
 
         // reinitialize move list because one move was removed
         InitializeMoves();
+
 
         Vector3 curNewPos = new Vector3(myRB.position.x + move_x, 0.5f, myRB.position.z + move_z);
         return curNewPos;

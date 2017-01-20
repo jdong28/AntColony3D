@@ -9,6 +9,8 @@ public class MapGenerator : MonoBehaviour {
     public Transform borderPrefab;
     public Transform [,] mapTile;
 
+    FoodController foodController;
+
     [Range(0, 1)]
     public float borderPercentage;
 
@@ -16,6 +18,8 @@ public class MapGenerator : MonoBehaviour {
     void Start () {
         mapTile = new Transform[(int) mapSize.x + 1 , (int) mapSize.y + 1 ];
         DrawMap();
+        foodController = GetComponent<FoodController>();
+        foodController.GenerateFood(10);
 	}
 	
 	// Update is called once per frame
